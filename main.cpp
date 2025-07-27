@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <regex>
 #include <Poco/Data/PostgreSQL/Connector.h>
 #include <Poco/Data/Session.h>
 #include <Poco/Data/Statement.h>
@@ -9,102 +11,98 @@ using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 using Poco::Data::Statement;
 
+enum task_t {
+    ADD_USER,
+    LOGIN_USER,
+    UPLOAD_FILE,
+    DOWNLOAD_FILE,
+    DELETE_FILE,
+    LIST_FILES,
+    SHOW_ERROR,
+};
+
 const std::string CONNECTION_STRING =
 "host=asia-south1.509ecc4c-201c-4248-a364-c059af51f5c4.gcp.yugabyte.cloud port=5433 user=admin password=gcW10R2_HiftI07pc-D0TzghDVs1mp dbname=yugabyte sslmode=verify-full sslrootcert=root.crt";
 
-void createDatabase(Session& session);
-void selectAccounts(Session& session);
-void transferMoneyBetweenAccounts(Session& session, int amount);
-
 int main(int argc, char* argv[]) {
-    std::cout << "Welcome!" << std::endl;
+    // Read arguments
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <command> <args...>" << std::endl;
+        return 1;
+    }
+    std::string task = argv[1];
+    std::string arg1;
+    std::string arg2;
+
+    task_t task_code;
+    // Identify the task based on the first argument
+    if (std::regex_match(task, std::regex("add(user)?"))) {
+        task_code = ADD_USER;
+    } else if (std::regex_match(task, std::regex("l(ogin)?"))) {
+        task_code = LOGIN_USER;
+    } else if (std::regex_match(task, std::regex("up(load)?"))) {
+        task_code = UPLOAD_FILE;
+    } else if (std::regex_match(task, std::regex("down(load)?"))) {
+        task_code = DOWNLOAD_FILE;
+    } else if (std::regex_match(task, std::regex("del(ete)?"))) {
+        task_code = DELETE_FILE;
+    } else if (std::regex_match(task, std::regex("list"))) {
+        task_code = LIST_FILES;
+    } else {
+        task_code = SHOW_ERROR;
+    }
 
     // Register the connector once at the start
     Poco::Data::PostgreSQL::Connector::registerConnector();
-
     try {
-        std::cout << "Using connection string: " << CONNECTION_STRING << std::endl;
-        std::cout << ">>>> Connecting to YugabyteDB!" << std::endl;
+        // std::cout << "Using connection string: " << CONNECTION_STRING << std::endl;
+        std::cout << ">>>> Connecting to File Server..." << std::endl;
 
         // 1. Create the session directly on the stack. No 'new' needed.
         Session session("PostgreSQL", CONNECTION_STRING);
 
-        std::cout << ">>>> Successfully connected to YugabyteDB!" << std::endl;
-
-        // 2. Pass the session by reference (&) to your functions
-        createDatabase(session);
-        selectAccounts(session);
-        transferMoneyBetweenAccounts(session, 800);
-        selectAccounts(session);
-
-    }
-    // 3. Catch the specific Poco exception to get better error details
-    catch (const Poco::Exception& e) {
+        std::cout << ">>>> Successfully connected!" << std::endl;
+    } catch (const Poco::Exception& e) {    // Catches the specific Poco exceptions
         std::cerr << "Poco Error: " << e.displayText() << std::endl;
         Poco::Data::PostgreSQL::Connector::unregisterConnector();
         return 1;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Standard Error: " << e.what() << std::endl;
         Poco::Data::PostgreSQL::Connector::unregisterConnector();
         return 1;
     }
 
+    // Do the task
+    if (task_code == ADD_USER) {
+        std::string& username = arg1 = argv[2];
+        std::string& password = arg2 = argv[3];
+        std::cout << "Adding user: " << username << " with password: " << password << std::endl;
+    } else if (task_code == LOGIN_USER) {
+        std::string& username = arg1 = argv[2];
+        std::string& password = arg2 = argv[3];
+        std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
+    } else if (task_code == UPLOAD_FILE) {
+        std::string& filename = arg1 = argv[2];
+        std::string& user = arg2 = argv[3];
+        std::cout << "Uploading file: " << filename << std::endl;
+    } else if (task_code == DOWNLOAD_FILE) {
+        std::string& file_id = arg1 = argv[2];
+        std::string& user_id = arg2 = argv[3];
+        std::cout << "Downloading file: " << file_id << " for user: " << user_id << std::endl;
+    } else if (task_code == DELETE_FILE) {
+        std::string& file_id = arg1 = argv[2];
+        std::string& user_id = arg2 = argv[3];
+        std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
+    } else if (task_code == LIST_FILES) {
+        std::string& user_id = arg1 = argv[2];
+        std::cout << "Listing files for user: " << user_id << std::endl;
+    } else {
+        std::cerr << "Invalid command: " << task << std::endl;
+        return 1;
+    }
+    return 0;
+
     // Unregister the connector before exiting
     Poco::Data::PostgreSQL::Connector::unregisterConnector();
     return 0;
-}
-
-void createDatabase(Session& session) {
-    std::cout << ">>>> Creating tables..." << std::endl;
-    session << "DROP TABLE IF EXISTS DemoAccount", now;
-    session << "CREATE TABLE DemoAccount ( \
-                id int PRIMARY KEY, \
-                name varchar, \
-                age int, \
-                country varchar, \
-                balance int)", now;
-    session << "INSERT INTO DemoAccount VALUES (1, 'Jessica', 28, 'USA', 10000)", now;
-    session << "INSERT INTO DemoAccount VALUES (2, 'John', 28, 'Canada', 9000)", now;
-
-    std::cout << ">>>> Successfully created table DemoAccount." << std::endl;
-}
-
-void selectAccounts(Session& session) {
-    std::cout << ">>>> Selecting accounts:" << std::endl;
-
-    Statement select(session);
-    select << "SELECT name, age, country, balance FROM DemoAccount";
-    select.execute();
-
-    Poco::Data::RecordSet rs(select);
-
-    for (size_t i = 0; i < rs.rowCount(); ++i) {
-        std::string name = rs["name"].convert<std::string>();
-        int age = rs["age"].convert<int>();
-        std::string country = rs["country"].convert<std::string>();
-        int balance = rs["balance"].convert<int>();
-
-        std::cout << "name=" << name << ", "
-            << "age=" << age << ", "
-            << "country=" << country << ", "
-            << "balance=" << balance << std::endl;
-        rs.moveNext();
-    }
-}
-
-void transferMoneyBetweenAccounts(Session& session, int amount) {
-    std::cout << ">>>> Transferring " << amount << " between accounts..." << std::endl;
-    try {
-        session << "UPDATE DemoAccount SET balance = balance -" + std::to_string(amount) +
-            " WHERE name = 'Jessica'", now;
-        session << "UPDATE DemoAccount SET balance = balance +" + std::to_string(amount) +
-            " WHERE name = 'John'", now;
-
-        std::cout << ">>>> Transferred " << amount << " between accounts." << std::endl;
-    }
-    catch (const Poco::Exception& e) {
-        std::cerr << "Database error: " << e.displayText() << std::endl;
-        throw;
-    }
 }
