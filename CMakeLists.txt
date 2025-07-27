@@ -1,21 +1,29 @@
-# Set the minimum required version of CMake
 cmake_minimum_required(VERSION 3.10)
-
-# Name your project
 project(MyPocoApp CXX)
-
-# Set the C++ standard to a modern version (e.g., C++17)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find the Poco library, specifically the "Foundation" component
-# This is where DateTime and DateTimeFormatter reside.
-# The REQUIRED keyword will cause CMake to fail if Poco is not found.
-find_package(Poco REQUIRED Foundation)
+# --- Diagnostic Step 1: Find PostgreSQL with verbose output ---
+message(STATUS "--> Searching for PostgreSQL...")
+# We make it optional here so we can write our own error message
+find_package(PostgreSQL)
 
-# Add your executable from a source file (e.g., main.cpp)
-add_executable(app MohammedImaadIqbal_SCEM_C++_Task2.cpp)
+# --- Diagnostic Step 2: Check if it was found and print details ---
+if(PostgreSQL_FOUND)
+    message(STATUS "--> SUCCESS: Found PostgreSQL.")
+    message(STATUS "    Include Dirs: ${PostgreSQL_INCLUDE_DIRS}")
+    message(STATUS "    Libraries: ${PostgreSQL_LIBRARIES}")
+else()
+    message(FATAL_ERROR "--> FAILURE: Could NOT find the PostgreSQL client library (libpq).
+    1. Make sure the development package is installed (e.g., 'libpq-dev', 'postgresql-devel').
+    2. If it's in a non-standard path, you must provide a hint to CMake (see instructions).")
+endif()
 
-# Link the Poco Foundation library to your executable.
-# This automatically handles include paths and linker flags.
-target_link_libraries(app PRIVATE Poco::Foundation)
+# The rest of the script will only run if PostgreSQL was found
+message(STATUS "--> Searching for Poco libraries...")
+find_package(Poco REQUIRED Foundation Data DataPostgreSQL)
+
+add_executable(app main.cpp)
+target_link_libraries(app PRIVATE Poco::Foundation Poco::Data Poco::DataPostgreSQL)
+
+message(STATUS "--> CMake configuration finished successfully.")
