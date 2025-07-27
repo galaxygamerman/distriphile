@@ -178,3 +178,6 @@ node_modules
 
 # Weird WSL files #
 *:Zone.Identifier
+
+# Authorization and Signature files #
+*.crt
