@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <regex>
 #include <Poco/Data/PostgreSQL/Connector.h>
@@ -68,10 +69,41 @@ int main(int argc, char* argv[]) {
             std::string& username = arg1 = argv[2];
             std::string& password = arg2 = argv[3];
             std::cout << "Adding user: " << username << " with password: " << password << std::endl;
+            session << "INSERT INTO users (username, password) VALUES(?, ?)",
+                use(username), use(password), Poco::Data::Keywords::now;
         } else if (task_code == LOGIN_USER) {
             std::string& username = arg1 = argv[2];
             std::string& password = arg2 = argv[3];
             std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
+            // Check if user exists
+            Poco::Data::Statement select(session);
+            select << "SELECT user_id, password FROM users WHERE username = ?", use(username), Poco::Data::Keywords::now;
+            Poco::Data::RecordSet rs(select);
+            if (rs.rowCount() != 0) {
+                std::string user_id = rs["user_id"].convert<std::string>();
+                std::string stored_password = rs["password"].convert<std::string>();
+                if (password == stored_password) {
+                    // Create a file called .login that stored the userID and password
+                    std::ofstream output_file(".login");
+                    // Check if the file was successfully opened for writing
+                    if (output_file.is_open()) {
+                        // Write the two strings, each on a new line
+                        output_file << user_id << std::endl;
+                        // Close the file
+                        output_file.close();
+                        std::cout << "Login successful for user: " << username << std::endl;
+                    } else {
+                        std::cerr << "Error: Unable to open file for writing." << std::endl;
+                        return 1; // Return an error code
+                    }
+                } else {
+                    std::cerr << "Incorrect password for user: " << username << std::endl;
+                }
+            } else {
+                std::cerr << "User not found: " << username << std::endl;
+                Poco::Data::PostgreSQL::Connector::unregisterConnector();
+                return 1;
+            }
         } else if (task_code == UPLOAD_FILE) {
             std::string& filename = arg1 = argv[2];
             std::string& user = arg2 = argv[3];
@@ -91,6 +123,8 @@ int main(int argc, char* argv[]) {
             std::cerr << "Invalid command: " << task << std::endl;
             return 1;
         }
+        // Unregister the connector before exiting
+        Poco::Data::PostgreSQL::Connector::unregisterConnector();
         return 0;
     } catch (const Poco::Exception& e) {    // Catches the specific Poco exceptions
         std::cerr << "Poco Error: " << e.displayText() << std::endl;
@@ -102,7 +136,4 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Unregister the connector before exiting
-    Poco::Data::PostgreSQL::Connector::unregisterConnector();
-    return 0;
 }
