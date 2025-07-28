@@ -71,19 +71,6 @@ void uploadFile(Session& session, const std::string& user_id, const std::string&
 }
 
 int main(int argc, char* argv[]) {
-	// First check if ".login" file exists
-	std::ifstream login_file(".login");
-	if (login_file) {
-		std::string user_id;
-		std::getline(login_file, user_id);
-		login_file.close();
-		std::cout << "User ID: " << user_id << std::endl;   // Debugging output
-	} else {
-		std::cerr << "No login file found. Please log in first using:" << std::endl
-			<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
-			<< '\t' << argv[0] << " login <username> <password>" << std::endl;
-		return 1; // Return an error code
-	}
 	// Read arguments
 	if (argc < 2) {
 		std::cerr << "Usage: " << argv[0] << " <command> <args...>" << std::endl;
@@ -111,6 +98,19 @@ int main(int argc, char* argv[]) {
 		task_code = SHOW_ERROR;
 	}
 
+	// First check if ".login" file exists
+	std::ifstream login_file(".login");
+	if (login_file) {
+		std::string user_id;
+		std::getline(login_file, user_id);
+		login_file.close();
+		std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+	} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
+		std::cerr << "No login file found. Please log in first using:" << std::endl
+			<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
+			<< '\t' << argv[0] << " login <username> <password>" << std::endl;
+		return 1; // Return an error code
+	}
 	// Register the connector once at the start
 	Poco::Data::PostgreSQL::Connector::registerConnector();
 	try {
