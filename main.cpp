@@ -62,6 +62,36 @@ int main(int argc, char* argv[]) {
         Session session("PostgreSQL", CONNECTION_STRING);
 
         std::cout << ">>>> Successfully connected!" << std::endl;
+
+        // Do the task
+        if (task_code == ADD_USER) {
+            std::string& username = arg1 = argv[2];
+            std::string& password = arg2 = argv[3];
+            std::cout << "Adding user: " << username << " with password: " << password << std::endl;
+        } else if (task_code == LOGIN_USER) {
+            std::string& username = arg1 = argv[2];
+            std::string& password = arg2 = argv[3];
+            std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
+        } else if (task_code == UPLOAD_FILE) {
+            std::string& filename = arg1 = argv[2];
+            std::string& user = arg2 = argv[3];
+            std::cout << "Uploading file: " << filename << std::endl;
+        } else if (task_code == DOWNLOAD_FILE) {
+            std::string& file_id = arg1 = argv[2];
+            std::string& user_id = arg2 = argv[3];
+            std::cout << "Downloading file: " << file_id << " for user: " << user_id << std::endl;
+        } else if (task_code == DELETE_FILE) {
+            std::string& file_id = arg1 = argv[2];
+            std::string& user_id = arg2 = argv[3];
+            std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
+        } else if (task_code == LIST_FILES) {
+            std::string& user_id = arg1 = argv[2];
+            std::cout << "Listing files for user: " << user_id << std::endl;
+        } else {
+            std::cerr << "Invalid command: " << task << std::endl;
+            return 1;
+        }
+        return 0;
     } catch (const Poco::Exception& e) {    // Catches the specific Poco exceptions
         std::cerr << "Poco Error: " << e.displayText() << std::endl;
         Poco::Data::PostgreSQL::Connector::unregisterConnector();
@@ -71,36 +101,6 @@ int main(int argc, char* argv[]) {
         Poco::Data::PostgreSQL::Connector::unregisterConnector();
         return 1;
     }
-
-    // Do the task
-    if (task_code == ADD_USER) {
-        std::string& username = arg1 = argv[2];
-        std::string& password = arg2 = argv[3];
-        std::cout << "Adding user: " << username << " with password: " << password << std::endl;
-    } else if (task_code == LOGIN_USER) {
-        std::string& username = arg1 = argv[2];
-        std::string& password = arg2 = argv[3];
-        std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
-    } else if (task_code == UPLOAD_FILE) {
-        std::string& filename = arg1 = argv[2];
-        std::string& user = arg2 = argv[3];
-        std::cout << "Uploading file: " << filename << std::endl;
-    } else if (task_code == DOWNLOAD_FILE) {
-        std::string& file_id = arg1 = argv[2];
-        std::string& user_id = arg2 = argv[3];
-        std::cout << "Downloading file: " << file_id << " for user: " << user_id << std::endl;
-    } else if (task_code == DELETE_FILE) {
-        std::string& file_id = arg1 = argv[2];
-        std::string& user_id = arg2 = argv[3];
-        std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
-    } else if (task_code == LIST_FILES) {
-        std::string& user_id = arg1 = argv[2];
-        std::cout << "Listing files for user: " << user_id << std::endl;
-    } else {
-        std::cerr << "Invalid command: " << task << std::endl;
-        return 1;
-    }
-    return 0;
 
     // Unregister the connector before exiting
     Poco::Data::PostgreSQL::Connector::unregisterConnector();
