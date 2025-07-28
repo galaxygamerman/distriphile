@@ -1,7 +1,16 @@
+-- PostgreSQL database initialization script for Matrecomm Assignment
+
+-- Drop existing tables if they exist
+DROP TABLE IF EXISTS file_chunks;
+DROP TABLE IF EXISTS uploaded_files;
+DROP TABLE IF EXISTS users;
+
+-- Create UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. User and Password table
 CREATE TABLE users (
-	user_id SERIAL PRIMARY KEY,
+	user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	username VARCHAR(50) UNIQUE NOT NULL,
 	password_hash VARCHAR(255) NOT NULL,
 	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -11,8 +20,8 @@ CREATE TABLE users (
 -- 2. Uploaded file ID and index table
 CREATE TABLE uploaded_files (
 	file_id SERIAL PRIMARY KEY,
-	user_id INTEGER NOT NULL,
-	filename VARCHAR(255) NOT NULL,
+	user_id UUID NOT NULL,
+	file_name VARCHAR(255) NOT NULL,
 	file_size BIGINT NOT NULL,
 	file_type VARCHAR(50),
 	upload_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
