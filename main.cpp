@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
 			}
 		} else if (task_code == UPLOAD_FILE) {
 			if (argc < 4) {
-				std::cerr << "Usage: " << argv[0] << " upload <filename> <filepath>" << std::endl;
+				std::cerr << "Usage: " << argv[0] << " upload <filename_after_upload> <path/to/file>" << std::endl;
 				return 1;
 			}
 			std::string& filename = arg1 = argv[2];
