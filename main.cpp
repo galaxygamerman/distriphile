@@ -69,15 +69,14 @@ int main(int argc, char* argv[]) {
             std::string& username = arg1 = argv[2];
             std::string& password = arg2 = argv[3];
             std::cout << "Adding user: " << username << " with password: " << password << std::endl;
-            session << "INSERT INTO users (username, password_hash) VALUES(?, ?)",
-                use(username), use(password), Poco::Data::Keywords::now;
+            session << "INSERT INTO users (username, password_hash) VALUES('" + username + "', '" + password + "')", Poco::Data::Keywords::now;
         } else if (task_code == LOGIN_USER) {
             std::string& username = arg1 = argv[2];
             std::string& password = arg2 = argv[3];
             std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
             // Check if user exists
             Poco::Data::Statement select(session);
-            select << "SELECT user_id, password_hash FROM users WHERE username = ?", use(username), Poco::Data::Keywords::now;
+            select << "SELECT user_id, password_hash FROM users WHERE username = '" + username + "'", Poco::Data::Keywords::now;
             Poco::Data::RecordSet rs(select);
             if (rs.rowCount() != 0) {
                 std::string user_id = rs["user_id"].convert<std::string>();
