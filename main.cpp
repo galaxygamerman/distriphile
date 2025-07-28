@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
             std::string& username = arg1 = argv[2];
             std::string& password = arg2 = argv[3];
             std::cout << "Adding user: " << username << " with password: " << password << std::endl;
-            session << "INSERT INTO users (username, password) VALUES(?, ?)",
+            session << "INSERT INTO users (username, password_hash) VALUES(?, ?)",
                 use(username), use(password), Poco::Data::Keywords::now;
         } else if (task_code == LOGIN_USER) {
             std::string& username = arg1 = argv[2];
@@ -77,11 +77,11 @@ int main(int argc, char* argv[]) {
             std::cout << "Logging in user: " << username << " with password: " << password << std::endl;
             // Check if user exists
             Poco::Data::Statement select(session);
-            select << "SELECT user_id, password FROM users WHERE username = ?", use(username), Poco::Data::Keywords::now;
+            select << "SELECT user_id, password_hash FROM users WHERE username = ?", use(username), Poco::Data::Keywords::now;
             Poco::Data::RecordSet rs(select);
             if (rs.rowCount() != 0) {
                 std::string user_id = rs["user_id"].convert<std::string>();
-                std::string stored_password = rs["password"].convert<std::string>();
+                std::string stored_password = rs["password_hash"].convert<std::string>();
                 if (password == stored_password) {
                     // Create a file called .login that stored the userID and password
                     std::ofstream output_file(".login");
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
             }
         } else if (task_code == UPLOAD_FILE) {
             std::string& filename = arg1 = argv[2];
-            std::string& user = arg2 = argv[3];
+            std::string& path_to_file = arg2 = argv[3];
             std::cout << "Uploading file: " << filename << std::endl;
         } else if (task_code == DOWNLOAD_FILE) {
             std::string& file_id = arg1 = argv[2];
