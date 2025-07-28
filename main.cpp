@@ -40,15 +40,13 @@ void uploadFile(Session& session, const std::string& user_id, const std::string&
 
 	Poco::File pocoFile(filepath);
 	long long fileSize = pocoFile.getSize();
-	std::string fileType = ""; // You may want to determine file type based on extension or content
 
 	// Insert file metadata into uploaded_files
 	int file_id;
-	session << "INSERT INTO uploaded_files (user_id, file_name, file_size, file_type) VALUES ("
+	session << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ("
 		+ user_id + ","
 		+ filename + ","
-		+ std::to_string(fileSize) + ","
-		+ fileType
+		+ std::to_string(fileSize)
 		+ ") RETURNING file_id",
 		into(file_id), now;
 
