@@ -37,9 +37,9 @@ int main(int argc, char* argv[]) {
 
     task_t task_code;
     // Identify the task based on the first argument
-    if (std::regex_match(task, std::regex("add(user)?"))) {
+    if (task == "adduser") {
         task_code = ADD_USER;
-    } else if (std::regex_match(task, std::regex("l(ogin)?"))) {
+    } else if (task == "login") {
         task_code = LOGIN_USER;
     } else if (std::regex_match(task, std::regex("up(load)?"))) {
         task_code = UPLOAD_FILE;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
         task_code = DOWNLOAD_FILE;
     } else if (std::regex_match(task, std::regex("del(ete)?"))) {
         task_code = DELETE_FILE;
-    } else if (std::regex_match(task, std::regex("list"))) {
+    } else if (std::regex_match(task, std::regex("l(ist)?"))) {
         task_code = LIST_FILES;
     } else {
         task_code = SHOW_ERROR;
