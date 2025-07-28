@@ -25,6 +25,53 @@ enum task_t {
 const std::string CONNECTION_STRING =
 "host=asia-south1.509ecc4c-201c-4248-a364-c059af51f5c4.gcp.yugabyte.cloud port=5433 user=admin password=gcW10R2_HiftI07pc-D0TzghDVs1mp dbname=yugabyte sslmode=verify-full sslrootcert=root.crt";
 
+#include <vector>
+#include <cmath>
+#include <Poco/File.h>
+
+const size_t CHUNK_SIZE = 1024 * 1024; // 1 MB chunks
+
+void uploadFile(Session& session, const std::string& user_id, const std::string& filename, const std::string& filepath) {
+	std::ifstream file(filepath, std::ios::binary);
+	if (!file) {
+		std::cerr << "Error: Unable to open file " << filepath << std::endl;
+		return;
+	}
+
+	Poco::File pocoFile(filepath);
+	long long fileSize = pocoFile.getSize();
+	std::string fileType = ""; // You may want to determine file type based on extension or content
+
+	// Insert file metadata into uploaded_files
+	int file_id;
+	session << "INSERT INTO uploaded_files (user_id, file_name, file_size, file_type) VALUES ("
+		+ user_id + ","
+		+ filename + ","
+		+ std::to_string(fileSize) + ","
+		+ fileType
+		+ ") RETURNING file_id",
+		into(file_id), now;
+
+	// Read and insert file chunks
+	std::vector<char> buffer(CHUNK_SIZE);
+	int chunkIndex = 0;
+	while (!file.eof()) {
+		file.read(buffer.data(), CHUNK_SIZE);
+		std::streamsize bytesRead = file.gcount();
+
+		if (bytesRead > 0) {
+			session << "INSERT INTO file_chunks (file_id, chunk_index, chunk_data) VALUES ("
+				+ std::to_string(file_id) + ", "
+				+ std::to_string(chunkIndex) + ", "
+				+ std::string(buffer.data(), bytesRead) +
+				")", now;
+			chunkIndex++;
+		}
+	}
+
+	std::cout << "File uploaded successfully. File ID: " << file_id << std::endl;
+}
+
 int main(int argc, char* argv[]) {
 	// First check if ".login" file exists
 	std::ifstream login_file(".login");
@@ -117,9 +164,23 @@ int main(int argc, char* argv[]) {
 				return 1;
 			}
 		} else if (task_code == UPLOAD_FILE) {
+			if (argc < 4) {
+				std::cerr << "Usage: " << argv[0] << " upload <filename> <filepath>" << std::endl;
+				return 1;
+			}
 			std::string& filename = arg1 = argv[2];
-			std::string& path_to_file = arg2 = argv[3];
-			std::cout << "Uploading file: " << filename << std::endl;
+			std::string& filepath = arg2 = argv[3];
+
+			// Read user_id from .login file
+			std::ifstream login_file(".login");
+			std::string user_id;
+			if (login_file >> user_id) {
+				std::cout << "Uploading file: " << filename << " from path: " << filepath << std::endl;
+				uploadFile(session, user_id, filename, filepath);
+			} else {
+				std::cerr << "Error: User not logged in. Please log in first." << std::endl;
+				return 1;
+			}
 		} else if (task_code == DOWNLOAD_FILE) {
 			std::string& file_id = arg1 = argv[2];
 			std::string& user_id = arg2 = argv[3];
