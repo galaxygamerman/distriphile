@@ -31,7 +31,7 @@ Made fully with POCO as the only dependency, and engineered entirely around the 
 ./build/app adduser <username> <password>
 ./build/app login <username> <password>
 ./build/app upload <name_to_be_given_in_server> <path/to/file>
-./build/app download <file_id_to_downloaded> <path/to/file>
+./build/app download <file_id_to_downloaded> <path/to/dest/dir>
 ./build/app list
 ./build/app delete <file_id_to_deleted>
 ```
