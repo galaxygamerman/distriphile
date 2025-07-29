@@ -199,7 +199,19 @@ int main(int argc, char* argv[]) {
 			std::cout << "Downloading file: " << file_id << " for user: " << user_id << std::endl;
 		} else if (task_code == DELETE_FILE) {
 			std::string& file_id = arg1 = argv[2];
-			std::string& user_id = arg2 = argv[3];
+			std::string user_id;
+			std::ifstream login_file(".login");
+			if (login_file) {
+				std::getline(login_file, user_id);
+				login_file.close();
+				std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+			} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
+				std::cerr << "No login file found. Please log in first using:" << std::endl
+					<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
+					<< '\t' << argv[0] << " login <username> <password>" << std::endl;
+				exit(1); // Return an error code
+			}
+			std::string file_name;
 			std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
 		} else if (task_code == LIST_FILES) {
 			std::string& user_id = arg1 = argv[2];
