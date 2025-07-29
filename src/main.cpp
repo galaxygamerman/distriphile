@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
 	task_t task_code = parse_task(task);
 
-	// First check if .login file exists
+	// First check if .login-for-distriphile file exists
 	if (getUserIdfromLoginFile() == ""
 		&& task_code != ADD_USER
 		&& task_code != LOGIN_USER) {
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	try {
 		std::cout << ">>>> Connecting to File Server..." << std::endl;
 
-		// 1. Create the session directly on the stack. No 'new' needed.
+		// Create the session directly on the stack
 		Session session("PostgreSQL", CONNECTION_STRING());
 
 		std::cout << ">>>> Successfully connected!" << std::endl;
@@ -86,10 +86,10 @@ int main(int argc, char* argv[]) {
 				std::cerr << "No login file found. Please log in first using:" << std::endl
 					<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
 					<< '\t' << argv[0] << " login <username> <password>" << std::endl;
-				return 1; // Return an error code
+				return 1;
 			}
 			std::string file_name;
-			deleteFile(file_id, user_id, session, file_name);
+			deleteFile(session, file_id, user_id, file_name);
 		} else if (task_code == LIST_FILES) {
 			std::string user_id = getUserIdfromLoginFile();
 			if (user_id.empty()) {

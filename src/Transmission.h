@@ -11,6 +11,6 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 
 void downloadFile(Poco::Data::Session& session, int file_id, const std::filesystem::path& save_path);
 
-void deleteFile(std::string& file_id, std::string& user_id, Poco::Data::Session& session, std::string& file_name);
+void deleteFile(Poco::Data::Session& session, std::string& user_id, std::string& file_id, std::string& file_name);
 
 void listFiles(Poco::Data::Session& session, std::string& user_id);

@@ -15,14 +15,14 @@
 using namespace Poco::Data::Keywords;
 
 void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string filename, const std::string& filepath) {
-	// 1. Open the file in binary mode to read its contents
+	// Open the file in binary mode to read its contents
 	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
 	if (!file.is_open()) {
 		std::cerr << "Error: Could not open file " << filepath << std::endl;
 		return;
 	}
 
-	// 2. Read the entire file into a memory buffer
+	// Read the entire file into a memory buffer
 	std::streamsize size = file.tellg();
 	file.seekg(0, std::ios::beg);
 	std::vector<unsigned char> buffer(size);
@@ -35,7 +35,7 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 	try {
 		int user_id_int = std::stoi(user_id);
 		Poco::Int64 size64 = static_cast<Poco::Int64>(size);
-		// 3. Prepare the SQL statement with placeholders
+		// Prepare the SQL statement with placeholders
 		Poco::Data::Statement insert_file(session);
 		insert_file << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ($1, $2, $3)",
 			use(user_id_int),
@@ -54,11 +54,11 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 
 		Poco::Data::Statement insert_binary(session);
 		insert_binary << "INSERT INTO file_chunks (file_id, chunk_data) VALUES ($1, $2)",
-			// 4. Bind the filename string to the first placeholder
+			// Bind the filename string to the first placeholder
 			use(file_id),
-			// 5. Bind the binary data from the buffer as a BLOB
+			// Bind the binary data from the buffer as a BLOB
 			use(blob);
-		// 6. Execute the statement
+		// Execute the statement
 		insert_binary.execute();
 
 		std::cout << "Successfully uploaded file as '" << filename << "' from path: " << filepath << std::endl;
@@ -123,7 +123,7 @@ void downloadFile(Poco::Data::Session& session, int file_id, const std::filesyst
 	}
 }
 
-void deleteFile(std::string& file_id, std::string& user_id, Poco::Data::Session& session, std::string& file_name) {
+void deleteFile(Poco::Data::Session& session, std::string& user_id, std::string& file_id, std::string& file_name) {
 	std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
 	session << "SELECT file_name FROM uploaded_files WHERE file_id = $1 AND user_id = $2",
 		Poco::Data::Keywords::use(file_id),
@@ -143,15 +143,15 @@ void deleteFile(std::string& file_id, std::string& user_id, Poco::Data::Session&
 void listFiles(Poco::Data::Session& session, std::string& user_id) {
 	using namespace Poco::Data::Keywords;
 
-	// 1. Prepare the statement
+	// Prepare the statement
 	Poco::Data::Statement select(session);
 	select << "SELECT file_id, file_name, file_size FROM uploaded_files WHERE user_id = $1",
 		use(user_id);
 
-	// 2. Execute the statement.
+	// Execute the statement.
 	select.execute();
 
-	// 3. Create a RecordSet, which fetches all results from the query.
+	// Create a RecordSet, which fetches all results from the query.
 	Poco::Data::RecordSet rs(select);
 
 	if (rs.rowCount() == 0) {
@@ -161,7 +161,7 @@ void listFiles(Poco::Data::Session& session, std::string& user_id) {
 
 	std::cout << "--- Files for User ID: " << user_id << " ---" << std::endl;
 
-	// 4. Iterate through the RecordSet and print each row's data.
+	// Iterate through the RecordSet and print each row's data.
 	for (auto& row : rs) {
 		int file_id = row["file_id"].convert<int>();
 		std::string file_name = row["file_name"].convert<std::string>();
