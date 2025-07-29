@@ -1,0 +1,35 @@
+# MohammedImaadIqbal_SCEM_C++_Task2
+presents...  
+# DistriPhile
+A distributed file sharing application and platform.
+Made fully with POCO as the only dependency, and engineered entirely around the YugaByte database (and by extension, PostgreSQL as well).
+
+## Building this app
+To build this software using cmake:
+```bash
+cmake -B build && cmake --build build
+```
+
+## Using the app:
+### Commands:
+- adduser: Add yourself as a user to the database
+- login: Login into your existing account
+- upload: Upload your file to the server
+- download: Download any file from the server
+- list: List all the files uploaded by you
+- delete: Delete a specific file from the server
+### Aliases:
+- up: Same as upload
+- down: Same as download
+- l: Same as list
+- del: Same as delete
+### Syntax:
+```bash
+./app
+./app adduser <username> <password>
+./app login <username> <password>
+./app upload <name_to_be_given_in_server> <path/to/file>
+./app download <file_id_to_downloaded> <path/to/file>
+./app list
+./app delete <file_id_to_deleted>
+```
