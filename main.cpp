@@ -228,8 +228,26 @@ int main(int argc, char* argv[]) {
 				Poco::Data::Keywords::now;
 			std::cout << "Successfully deleted " << file_name << " of file_id: " << file_id << std::endl;
 		} else if (task_code == LIST_FILES) {
-			std::string& user_id = arg1 = argv[2];
+			std::string user_id;
+			std::ifstream login_file(".login");
+			if (login_file) {
+				std::getline(login_file, user_id);
+				login_file.close();
+				std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+			} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
+				std::cerr << "No login file found. Please log in first using:" << std::endl
+					<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
+					<< '\t' << argv[0] << " login <username> <password>" << std::endl;
+				exit(1); // Return an error code
+			}
+			// Display all files uploaded by the user
 			std::cout << "Listing files for user: " << user_id << std::endl;
+			std::string output;
+			session << "SELECT * FROM uploaded_files WHERE user_id = $1",
+				Poco::Data::Keywords::use(user_id),
+				Poco::Data::Keywords::into(output),
+				Poco::Data::Keywords::now;
+			std::cout << output << std::endl; // Display the output
 		} else {
 			std::cerr << "Invalid command: " << task << std::endl;
 			return 1;
