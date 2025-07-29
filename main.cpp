@@ -213,6 +213,19 @@ int main(int argc, char* argv[]) {
 			}
 			std::string file_name;
 			std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
+			session << "SELECT file_name FROM uploaded_files WHERE file_id = ? AND user_id = ?",
+				Poco::Data::Keywords::use(file_id),
+				Poco::Data::Keywords::use(user_id),
+				Poco::Data::Keywords::into(file_name),
+				Poco::Data::Keywords::now;
+			session << "DELETE FROM uploaded_files WHERE file_id = ? AND user_id = ?",
+				Poco::Data::Keywords::use(file_id),
+				Poco::Data::Keywords::use(user_id),
+				Poco::Data::Keywords::now;
+			session << "DELETE FROM file_chunks WHERE file_id = ?",
+				Poco::Data::Keywords::use(file_id),
+				Poco::Data::Keywords::now;
+			std::cout << "Successfully deleted " << file_name << " of file_id: " << file_id << std::endl;
 		} else if (task_code == LIST_FILES) {
 			std::string& user_id = arg1 = argv[2];
 			std::cout << "Listing files for user: " << user_id << std::endl;
