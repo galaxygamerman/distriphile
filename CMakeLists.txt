@@ -33,7 +33,11 @@ message(STATUS "    and Libraries: ${Poco_LIBRARIES}")
 
 # --- Step 3: Build Application ---
 add_executable(app 
-	src/main.cpp)
+	src/main.cpp
+	src/Auth.cpp
+	src/Commands.cpp
+	src/Transmission.cpp
+)
 target_link_libraries(app PRIVATE
 	Poco::Foundation
 	Poco::Data
