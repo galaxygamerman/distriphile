@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 		std::string user_id;
 		std::getline(login_file, user_id);
 		login_file.close();
-		std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+		// std::cout << "User ID: " << user_id << std::endl;   // Debugging output
 	} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
 		std::cerr << "No login file found. Please log in first using:" << std::endl
 			<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
 			if (login_file) {
 				std::getline(login_file, user_id);
 				login_file.close();
-				std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+				// std::cout << "User ID: " << user_id << std::endl;   // Debugging output
 			} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
 				std::cerr << "No login file found. Please log in first using:" << std::endl
 					<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
@@ -233,7 +233,7 @@ int main(int argc, char* argv[]) {
 			if (login_file) {
 				std::getline(login_file, user_id);
 				login_file.close();
-				std::cout << "User ID: " << user_id << std::endl;   // Debugging output
+				// std::cout << "User ID: " << user_id << std::endl;   // Debugging output
 			} else if (task_code != ADD_USER && task_code != LOGIN_USER) {
 				std::cerr << "No login file found. Please log in first using:" << std::endl
 					<< '\t' << argv[0] << " adduser <username> <password>" << std::endl
@@ -241,13 +241,36 @@ int main(int argc, char* argv[]) {
 				exit(1); // Return an error code
 			}
 			// Display all files uploaded by the user
-			std::cout << "Listing files for user: " << user_id << std::endl;
-			std::string output;
-			session << "SELECT * FROM uploaded_files WHERE user_id = $1",
-				Poco::Data::Keywords::use(user_id),
-				Poco::Data::Keywords::into(output),
-				Poco::Data::Keywords::now;
-			std::cout << output << std::endl; // Display the output
+			using namespace Poco::Data::Keywords;
+
+			// 1. Prepare the statement
+			Poco::Data::Statement select(session);
+			select << "SELECT file_id, file_name, file_size FROM uploaded_files WHERE user_id = $1",
+				use(user_id);
+
+			// 2. Execute the statement.
+			select.execute();
+
+			// 3. Create a RecordSet, which fetches all results from the query.
+			Poco::Data::RecordSet rs(select);
+
+			if (rs.rowCount() == 0) {
+				std::cout << "No files found for user ID " << user_id << "." << std::endl;
+				return 0;
+			}
+
+			std::cout << "--- Files for User ID: " << user_id << " ---" << std::endl;
+
+			// 4. Iterate through the RecordSet and print each row's data.
+			for (auto& row : rs) {
+				int file_id = row["file_id"].convert<int>();
+				std::string file_name = row["file_name"].convert<std::string>();
+				Poco::Int64 file_size = row["file_size"].convert<Poco::Int64>();
+
+				std::cout << "ID: " << file_id
+					<< ", Name: " << file_name
+					<< ", Size: " << file_size << " bytes" << std::endl;
+			}
 		} else {
 			std::cerr << "Invalid command: " << task << std::endl;
 			return 1;
