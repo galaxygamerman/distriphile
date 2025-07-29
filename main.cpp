@@ -55,13 +55,14 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 		Poco::Int64 size64 = static_cast<Poco::Int64>(size);
 		// 3. Prepare the SQL statement with placeholders
 		Poco::Data::Statement insert_file(session);
-		insert_file << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ("
-			+ user_id + ","
-			+ filename + ","
-			+ std::to_string(size) + ")", now;
+		insert_file << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ($1, $2, $3)",
+			use(user_id_int),
+			use(filename),
+			use(size64),
+			now;
 
 		int file_id;
-		session << "SELECT file_id FROM uploaded_files WHERE user_id = ? AND file_name = ?",
+		session << "SELECT file_id FROM uploaded_files WHERE user_id = $1 AND file_name = $2",
 			use(user_id_int),
 			use(filename),
 			into(file_id),
@@ -70,7 +71,7 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 		Poco::Data::BLOB blob(buffer.data());
 
 		Poco::Data::Statement insert_binary(session);
-		insert_binary << "INSERT INTO file_chunks (file_id, chunk_data) VALUES (?, ?)",
+		insert_binary << "INSERT INTO file_chunks (file_id, chunk_data) VALUES ($1, $2)",
 			// 4. Bind the filename string to the first placeholder
 			use(file_id),
 			// 5. Bind the binary data from the buffer as a BLOB
@@ -213,16 +214,16 @@ int main(int argc, char* argv[]) {
 			}
 			std::string file_name;
 			std::cout << "Deleting file: " << file_id << " for user: " << user_id << std::endl;
-			session << "SELECT file_name FROM uploaded_files WHERE file_id = ? AND user_id = ?",
+			session << "SELECT file_name FROM uploaded_files WHERE file_id = $1 AND user_id = $2",
 				Poco::Data::Keywords::use(file_id),
 				Poco::Data::Keywords::use(user_id),
 				Poco::Data::Keywords::into(file_name),
 				Poco::Data::Keywords::now;
-			session << "DELETE FROM uploaded_files WHERE file_id = ? AND user_id = ?",
+			session << "DELETE FROM uploaded_files WHERE file_id = $1 AND user_id = $2",
 				Poco::Data::Keywords::use(file_id),
 				Poco::Data::Keywords::use(user_id),
 				Poco::Data::Keywords::now;
-			session << "DELETE FROM file_chunks WHERE file_id = ?",
+			session << "DELETE FROM file_chunks WHERE file_id = $1",
 				Poco::Data::Keywords::use(file_id),
 				Poco::Data::Keywords::now;
 			std::cout << "Successfully deleted " << file_name << " of file_id: " << file_id << std::endl;
