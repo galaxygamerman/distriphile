@@ -5,10 +5,12 @@ A distributed file sharing application and platform.
 Made fully with POCO as the only dependency, and engineered entirely around the YugaByte database (and by extension, PostgreSQL as well).
 
 ## Building this app
-To build this software using cmake:
-```bash
-cmake -B build && cmake --build build
-```
+- Initialise your yugabyte database first with the script in [initDB.sql](initDB.sql)
+- Edit the properties in [src/env.h](src/env_example.h). The project has a [src/env_example.h](<src/env_example.h>) for you to copy and edit.
+- Build the app using cmake:
+	```bash
+	cmake -B build && cmake --build build
+	```
 
 ## Using the app:
 ### Commands:
