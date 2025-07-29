@@ -30,9 +30,9 @@ CREATE TABLE uploaded_files (
 CREATE TABLE file_chunks (
 	chunk_id SERIAL PRIMARY KEY,
 	file_id INTEGER NOT NULL,
-	chunk_index INTEGER NOT NULL,
+	-- chunk_index INTEGER NOT NULL,
 	chunk_data BYTEA NOT NULL,
-	UNIQUE (file_id, chunk_index),
+	-- UNIQUE (file_id, chunk_index),
 	CONSTRAINT fk_file FOREIGN KEY (file_id) REFERENCES uploaded_files(file_id) ON DELETE CASCADE
 );
 
