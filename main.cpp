@@ -25,8 +25,10 @@ enum task_t {
 	SHOW_ERROR,
 };
 
+const std::filesystem::path path_to_login_file = "/home/galaxygamerman/matrecomm_assignment/.login";
+
 const std::string CONNECTION_STRING =
-"host=asia-south1.509ecc4c-201c-4248-a364-c059af51f5c4.gcp.yugabyte.cloud port=5433 user=admin password=gcW10R2_HiftI07pc-D0TzghDVs1mp dbname=yugabyte sslmode=verify-full sslrootcert=root.crt";
+"host=asia-south1.509ecc4c-201c-4248-a364-c059af51f5c4.gcp.yugabyte.cloud port=5433 user=admin password=gcW10R2_HiftI07pc-D0TzghDVs1mp dbname=yugabyte sslmode=verify-full sslrootcert=/home/galaxygamerman/matrecomm_assignment/root.crt";
 
 #include <vector>
 #include <cmath>
@@ -171,8 +173,8 @@ int main(int argc, char* argv[]) {
 		task_code = SHOW_ERROR;
 	}
 
-	// First check if ".login" file exists
-	std::ifstream login_file(".login");
+	// First check if path_to_login_file file exists
+	std::ifstream login_file(path_to_login_file);
 	if (login_file) {
 		std::string user_id;
 		std::getline(login_file, user_id);
@@ -214,7 +216,7 @@ int main(int argc, char* argv[]) {
 				std::string stored_password = rs["password_hash"].convert<std::string>();
 				if (password == stored_password) {
 					// Create a file called .login that stored the userID and password
-					std::ofstream output_file(".login");
+					std::ofstream output_file(path_to_login_file);
 					// Check if the file was successfully opened for writing
 					if (output_file.is_open()) {
 						// Write the two strings, each on a new line
@@ -243,7 +245,7 @@ int main(int argc, char* argv[]) {
 			std::string& filepath = arg2 = argv[3];
 
 			// Read user_id from .login file
-			std::ifstream login_file(".login");
+			std::ifstream login_file(path_to_login_file);
 			std::string user_id;
 			if (login_file >> user_id) {
 				std::cout << "Uploading file: " << filename << " from path: " << filepath << std::endl;
@@ -263,7 +265,7 @@ int main(int argc, char* argv[]) {
 		} else if (task_code == DELETE_FILE) {
 			std::string& file_id = arg1 = argv[2];
 			std::string user_id;
-			std::ifstream login_file(".login");
+			std::ifstream login_file(path_to_login_file);
 			if (login_file) {
 				std::getline(login_file, user_id);
 				login_file.close();
@@ -291,7 +293,7 @@ int main(int argc, char* argv[]) {
 			std::cout << "Successfully deleted " << file_name << " of file_id: " << file_id << std::endl;
 		} else if (task_code == LIST_FILES) {
 			std::string user_id;
-			std::ifstream login_file(".login");
+			std::ifstream login_file(path_to_login_file);
 			if (login_file) {
 				std::getline(login_file, user_id);
 				login_file.close();
