@@ -10,14 +10,12 @@
 #include "Auth.h"
 #include "Commands.h"
 #include "Transmission.h"
+#include "env.h" // Contains the connection string
 
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 using Poco::Data::Statement;
 using Poco::Data::RecordSet;
-
-const std::string CONNECTION_STRING =
-"host=asia-south1.509ecc4c-201c-4248-a364-c059af51f5c4.gcp.yugabyte.cloud port=5433 user=admin password=gcW10R2_HiftI07pc-D0TzghDVs1mp dbname=yugabyte sslmode=verify-full sslrootcert=/home/galaxygamerman/matrecomm_assignment/root.crt";
 
 int main(int argc, char* argv[]) {
 	// Read arguments
@@ -41,11 +39,10 @@ int main(int argc, char* argv[]) {
 	// Register the connector once at the start
 	Poco::Data::PostgreSQL::Connector::registerConnector();
 	try {
-		// std::cout << "Using connection string: " << CONNECTION_STRING << std::endl;
 		std::cout << ">>>> Connecting to File Server..." << std::endl;
 
 		// 1. Create the session directly on the stack. No 'new' needed.
-		Session session("PostgreSQL", CONNECTION_STRING);
+		Session session("PostgreSQL", CONNECTION_STRING());
 
 		std::cout << ">>>> Successfully connected!" << std::endl;
 

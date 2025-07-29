@@ -180,4 +180,5 @@ node_modules
 *:Zone.Identifier
 
 # Authorization and Signature files #
+*/env.h
 *.crt
