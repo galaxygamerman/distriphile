@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 
 const extern std::string HOST = "your-hostname-or-ip";
