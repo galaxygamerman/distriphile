@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <regex>
+#include <filesystem>
 #include <Poco/Data/PostgreSQL/Connector.h>
 #include <Poco/Data/Session.h>
 #include <Poco/Data/Statement.h>
@@ -12,6 +13,7 @@
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
 using Poco::Data::Statement;
+using Poco::Data::RecordSet;
 
 enum task_t {
 	ADD_USER,
@@ -82,6 +84,62 @@ void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string 
 		std::cout << "Successfully inserted image: " << filepath << std::endl;
 	} catch (const Poco::Exception& e) {
 		std::cerr << "Database error: " << e.displayText() << std::endl;
+	}
+}
+
+void downloadFile(Session& session, int file_id, const std::filesystem::path& save_path) {
+	try {
+		// --- 1. Get the file's name from its metadata ---
+		std::string filename;
+		Statement select_meta(session);
+		select_meta << "SELECT file_name FROM uploaded_files WHERE file_id = $1",
+			use(file_id),
+			into(filename),
+			now;
+
+		if (filename.empty()) {
+			std::cerr << "Error: File with ID " << file_id << " not found." << std::endl;
+			return;
+		}
+
+		std::filesystem::path full_save_path = std::filesystem::path(save_path) / filename;
+		std::cout << "Downloading file to: " << full_save_path << std::endl;
+
+		std::filesystem::create_directories(std::filesystem::path(save_path));
+		// --- 2. Open the local output file for writing in binary mode ---
+		std::ofstream output_file(full_save_path, std::ios::binary);
+		if (!output_file.is_open()) {
+			std::cerr << "Error: Could not create file at " << full_save_path << std::endl;
+			return;
+		}
+
+		// --- 3. Retrieve all file chunks in the correct order ---
+		Statement select_chunks(session);
+		select_chunks << "SELECT chunk_data FROM file_chunks WHERE file_id = $1 ORDER BY file_chunks.chunk_id ASC",
+			use(file_id);
+		select_chunks.execute();
+
+		RecordSet rs(select_chunks);
+		if (rs.rowCount() == 0) {
+			std::cerr << "Error: No data found for file ID " << file_id << ". The file may be empty or corrupt." << std::endl;
+			return;
+		}
+
+		// --- 4. Loop through the chunks and write them to the local file ---
+		for (auto& row : rs) {
+			// --- FIX: Extract the raw binary data into a std::string ---
+			// The database driver is likely returning the BYTEA data as a raw string.
+			std::string chunk_data = row["chunk_data"].convert<std::string>();
+
+			// Write the contents of the string directly to the output file.
+			output_file.write(chunk_data.data(), chunk_data.size());
+		}
+
+		output_file.close();
+		std::cout << "✅ File downloaded successfully." << std::endl;
+
+	} catch (const Poco::Exception& e) {
+		std::cerr << "Database error during download: " << e.displayText() << std::endl;
 	}
 }
 
@@ -195,9 +253,13 @@ int main(int argc, char* argv[]) {
 				return 1;
 			}
 		} else if (task_code == DOWNLOAD_FILE) {
-			std::string& file_id = arg1 = argv[2];
-			std::string& user_id = arg2 = argv[3];
-			std::cout << "Downloading file: " << file_id << " for user: " << user_id << std::endl;
+			if (argc < 4) {
+				std::cerr << "Usage: " << argv[0] << " download <file_id> <path/to/save>" << std::endl;
+				return 1;
+			}
+			int file_id_to_download = std::stoi(argv[2]);
+			std::string save_path = argv[3];
+			downloadFile(session, file_id_to_download, save_path);
 		} else if (task_code == DELETE_FILE) {
 			std::string& file_id = arg1 = argv[2];
 			std::string user_id;
