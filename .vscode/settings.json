@@ -53,6 +53,7 @@
 		"stdexcept": "cpp",
 		"streambuf": "cpp",
 		"cfenv": "cpp",
-		"typeinfo": "cpp"
+		"typeinfo": "cpp",
+		"filesystem": "cpp"
 	}
 }
