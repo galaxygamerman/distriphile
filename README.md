@@ -25,11 +25,11 @@ cmake -B build && cmake --build build
 - del: Same as delete
 ### Syntax:
 ```bash
-./app
-./app adduser <username> <password>
-./app login <username> <password>
-./app upload <name_to_be_given_in_server> <path/to/file>
-./app download <file_id_to_downloaded> <path/to/file>
-./app list
-./app delete <file_id_to_deleted>
+./build/app
+./build/app adduser <username> <password>
+./build/app login <username> <password>
+./build/app upload <name_to_be_given_in_server> <path/to/file>
+./build/app download <file_id_to_downloaded> <path/to/file>
+./build/app list
+./build/app delete <file_id_to_deleted>
 ```
