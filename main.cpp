@@ -7,6 +7,7 @@
 #include <Poco/Data/Statement.h>
 #include <Poco/Data/RecordSet.h>
 #include <Poco/Data/SessionFactory.h>
+#include <Poco/Data/LOB.h>
 
 using namespace Poco::Data::Keywords;
 using Poco::Data::Session;
@@ -29,45 +30,58 @@ const std::string CONNECTION_STRING =
 #include <cmath>
 #include <Poco/File.h>
 
-const size_t CHUNK_SIZE = 1024 * 1024; // 1 MB chunks
-
-void uploadFile(Session& session, const std::string& user_id, const std::string& filename, const std::string& filepath) {
-	std::ifstream file(filepath, std::ios::binary);
-	if (!file) {
-		std::cerr << "Error: Unable to open file " << filepath << std::endl;
+void uploadFile(Poco::Data::Session& session, std::string& user_id, std::string filename, const std::string& filepath) {
+	// 1. Open the file in binary mode to read its contents
+	std::ifstream file(filepath, std::ios::binary | std::ios::ate);
+	if (!file.is_open()) {
+		std::cerr << "Error: Could not open file " << filepath << std::endl;
 		return;
 	}
 
-	Poco::File pocoFile(filepath);
-	long long fileSize = pocoFile.getSize();
-
-	// Insert file metadata into uploaded_files
-	int file_id;
-	session << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ("
-		+ user_id + ","
-		+ filename + ","
-		+ std::to_string(fileSize)
-		+ ") RETURNING file_id",
-		into(file_id), now;
-
-	// Read and insert file chunks
-	std::vector<char> buffer(CHUNK_SIZE);
-	int chunkIndex = 0;
-	while (!file.eof()) {
-		file.read(buffer.data(), CHUNK_SIZE);
-		std::streamsize bytesRead = file.gcount();
-
-		if (bytesRead > 0) {
-			session << "INSERT INTO file_chunks (file_id, chunk_index, chunk_data) VALUES ("
-				+ std::to_string(file_id) + ", "
-				+ std::to_string(chunkIndex) + ", "
-				+ std::string(buffer.data(), bytesRead) +
-				")", now;
-			chunkIndex++;
-		}
+	// 2. Read the entire file into a memory buffer
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+	std::vector<unsigned char> buffer(size);
+	if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+		std::cerr << "Error: Could not read file." << std::endl;
+		return;
 	}
+	file.close();
 
-	std::cout << "File uploaded successfully. File ID: " << file_id << std::endl;
+	try {
+		using namespace Poco::Data::Keywords;
+
+		int user_id_int = std::stoi(user_id);
+		Poco::Int64 size64 = static_cast<Poco::Int64>(size);
+		// 3. Prepare the SQL statement with placeholders
+		Poco::Data::Statement insert_file(session);
+		insert_file << "INSERT INTO uploaded_files (user_id, file_name, file_size) VALUES ("
+			+ user_id + ","
+			+ filename + ","
+			+ std::to_string(size) + ")", now;
+
+		int file_id;
+		session << "SELECT file_id FROM uploaded_files WHERE user_id = ? AND file_name = ?",
+			use(user_id_int),
+			use(filename),
+			into(file_id),
+			now;
+
+		Poco::Data::BLOB blob(buffer.data());
+
+		Poco::Data::Statement insert_binary(session);
+		insert_binary << "INSERT INTO file_chunks (file_id, chunk_data) VALUES (?, ?)",
+			// 4. Bind the filename string to the first placeholder
+			use(file_id),
+			// 5. Bind the binary data from the buffer as a BLOB
+			use(blob);
+		// 6. Execute the statement
+		insert_binary.execute();
+
+		std::cout << "Successfully inserted image: " << filepath << std::endl;
+	} catch (const Poco::Exception& e) {
+		std::cerr << "Database error: " << e.displayText() << std::endl;
+	}
 }
 
 int main(int argc, char* argv[]) {
