@@ -8,7 +8,7 @@
 #include <Poco/Data/Session.h>
 #include <Poco/Data/RecordSet.h>
 
-const extern std::filesystem::path path_to_login_file = "/home/galaxygamerman/matrecomm_assignment/.login";
+const extern std::filesystem::path path_to_login_file = "./.login-for-distriphile";
 
 std::string getUserIdfromLoginFile() {
 	std::ifstream login_file(path_to_login_file);
