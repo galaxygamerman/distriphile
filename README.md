@@ -1,5 +1,3 @@
-# MohammedImaadIqbal_SCEM_C++_Task2
-presents...  
 # DistriPhile
 A distributed file sharing application and platform.
 Made fully with POCO as the only dependency, and engineered entirely around the YugaByte database (and by extension, PostgreSQL as well).
